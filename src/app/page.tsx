@@ -25,7 +25,8 @@ export default function HomePage() {
 
     try {
       // import ColorThief dynamically (client-side only)
-      const { default: ColorThief } = await import("color-thief-browser");
+     const ColorThief = (await import("color-thief-browser")).default;
+
 
       await new Promise<void>((resolve, reject) => {
         const img = new Image();
