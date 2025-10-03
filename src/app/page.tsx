@@ -25,12 +25,12 @@ export default function HomePage() {
 
     try {
       // import ColorThief dynamically (client-side only)
-     const ColorThief = (await import("color-thief-browser")).default;
-
+      const ColorThief = (await import("color-thief-browser")).default;
 
       await new Promise<void>((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = "anonymous"; // important for cross-origin images
+
         img.onload = () => {
           try {
             const ct = new ColorThief();
@@ -45,32 +45,32 @@ export default function HomePage() {
             reject(err);
           }
         };
-        img.onerror = (e) => {
-          reject(new Error("Failed to load image for color extraction"));
+
+        img.onerror = () => {
+          reject(new Error("Image failed to load"));
         };
+
         img.src = url;
-        // If the image is already cached and complete, try run onload
-        if (img.complete) {
-          // some browsers may not call onload if already complete, so do a microtask
-          setTimeout(() => {
-            if (img.naturalWidth) {
-              try {
-                const ct = new (require("color-thief-browser").default)();
-                const dom = ct.getColor(img);
-                const pal = ct.getPalette(img, 6) || [];
-                setDominant(rgbToHex(dom));
-                setPalette(pal.map(rgbToHex));
-                resolve();
-              } catch (err) {
-                reject(err);
-              }
-            }
-          }, 0);
+
+        // If the image is already cached and complete, trigger immediately
+        if (img.complete && img.naturalWidth) {
+          try {
+            const ct = new ColorThief();
+            const dom = ct.getColor(img);
+            const pal = ct.getPalette(img, 6) || [];
+            setDominant(rgbToHex(dom));
+            setPalette(pal.map(rgbToHex));
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
         }
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError("Could not extract colors from this image. Try another file or a local image.");
+      setError(
+        "Could not extract colors from this image. Try another file or a local image."
+      );
     }
   }, []);
 
@@ -83,12 +83,17 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8" style={{
-      // use CSS var for accent if set (fallback)
-      background: 'linear-gradient(180deg,var(--accent, #e9d5ff), #f8fafc)'
-    }}>
+    <main
+      className="min-h-screen bg-gray-50 p-8"
+      style={{
+        // use CSS var for accent if set (fallback)
+        background: "linear-gradient(180deg,var(--accent, #e9d5ff), #f8fafc)",
+      }}
+    >
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Image Color Picker 🎨</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">
+          Image Color Picker 🎨
+        </h1>
 
         <ImageDropzone onFileDataUrl={(d) => handleFile(d)} />
 
@@ -104,7 +109,8 @@ export default function HomePage() {
         </div>
 
         <div className="mt-8 text-sm text-gray-500">
-          Tip: Use cross-origin images (from other domains) may fail color extraction unless the image supports CORS.
+          Tip: Using cross-origin images (from other domains) may fail color
+          extraction unless the image supports CORS.
         </div>
       </div>
     </main>
